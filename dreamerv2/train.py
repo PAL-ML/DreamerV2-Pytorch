@@ -111,6 +111,7 @@ tensor_range = torch.arange(0, num_actions).unsqueeze(0)
 random_action_dist = torch.distributions.one_hot_categorical.OneHotCategorical(torch.ones((1, num_actions)))
 
 def gather_episode():
+    print ("Gathering data")
     with torch.no_grad():
         while True:
             obs = env.reset()

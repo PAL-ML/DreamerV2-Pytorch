@@ -12,16 +12,16 @@ class WorldModel(nn.Module):
 
         # #q (1st part): (x) -> xembedded
         # self.representation_model_encoder = nn.Sequential(
-        #     #1,64,64
-        #     nn.Conv2d(3, 32, 3, padding=1, stride=2), #32,32,32
+        #     # 1,64,64
+        #     nn.Conv2d(3, 32, 3, padding=1, stride=2), # 32,32,32
         #     nn.ELU(inplace=True),
-        #     nn.Conv2d(32, 64, 3, padding=1, stride=2), #64,16,16
+        #     nn.Conv2d(32, 64, 3, padding=1, stride=2), # 64,16,16
         #     nn.ELU(inplace=True),
-        #     nn.Conv2d(64, 128, 3, padding=1, stride=2), #128, 8, 8
+        #     nn.Conv2d(64, 128, 3, padding=1, stride=2), # 128, 8, 8
         #     nn.ELU(inplace=True),
-        #     nn.Conv2d(128, 256, 3, padding=1, stride=2), #256, 4, 4
+        #     nn.Conv2d(128, 256, 3, padding=1, stride=2), # 256, 4, 4
         #     nn.ELU(inplace=True),
-        #     nn.Conv2d(256, 512, 4), #512, 1, 1
+        #     nn.Conv2d(256, 512, 4), # 512, 1, 1
         #     nn.ELU(inplace=True)
         # )
         
@@ -71,14 +71,14 @@ class WorldModel(nn.Module):
             nn.ELU(inplace=True),
         )
         
-        # self.image_predictor_conv = nn.Sequential( #64, 4, 4
-        #     nn.ConvTranspose2d(64, 32, 3, stride=2, padding=1, output_padding=1), #32, 8, 8
+        # self.state_predictor_decoder = nn.Sequential( # 64, 4, 4
+        #     nn.ConvTranspose2d(64, 32, 3, stride=2, padding=1, output_padding=1), # 32, 8, 8
         #     nn.ELU(inplace=True),
-        #     nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1), #16, 16, 16
+        #     nn.ConvTranspose2d(32, 16, 3, stride=2, padding=1, output_padding=1), # 16, 16, 16
         #     nn.ELU(inplace=True),
-        #     nn.ConvTranspose2d(16, 8, 3, stride=2, padding=1, output_padding=1), #8, 32, 32
+        #     nn.ConvTranspose2d(16, 8, 3, stride=2, padding=1, output_padding=1), # 8, 32, 32
         #     nn.ELU(inplace=True),
-        #     nn.ConvTranspose2d(8, 8, 3, stride=2, padding=1, output_padding=1), #3, 64, 64
+        #     nn.ConvTranspose2d(8, 8, 3, stride=2, padding=1, output_padding=1), # 3, 64, 64
         #     nn.ELU(inplace=True),
         #     nn.Conv2d(8, 3, 3, padding=1),
         # )
@@ -140,9 +140,7 @@ class WorldModel(nn.Module):
         embedding = embedding.reshape(-1, 512)
         embedding = torch.cat((h, embedding), dim=1)
         z_logits = self.representation_model_mlp(embedding)
-        z_sample = torch.distributions.one_hot_categorical.OneHotCategorical(
-            logits=z_logits.reshape(-1, 32, 32)
-        ).sample()
+        z_sample = torch.distributions.one_hot_categorical.OneHotCategorical(logits=z_logits.reshape(-1, 32, 32)).sample()
         
         # no straight-though gradient
         return z_sample, h
@@ -162,14 +160,12 @@ class WorldModel(nn.Module):
         gamma_hat = self.gamma_predictor_mlp(h_z)
 
         # r_hat_sample = torch.distributions.normal.Normal(
-        #     loc=r_hat,
-        #     scale=1.0
+            # loc=r_hat,
+            # scale=1.0
         # ).sample()
+        
         r_hat_sample = r_hat.detach()
-
-        gamma_hat_sample = torch.distributions.bernoulli.Bernoulli(
-            logits=gamma_hat
-        ).sample() * self.gamma #Bernoulli in {0,1}
+        gamma_hat_sample = torch.distributions.bernoulli.Bernoulli(logits=gamma_hat).sample() * self.gamma #Bernoulli in {0,1}
 
         return z_logits, z_sample, z_hat_logits, x_hat, r_hat, gamma_hat, h, (z_hat_sample, r_hat_sample, gamma_hat_sample)
 
@@ -195,7 +191,7 @@ class WorldModel(nn.Module):
 
 
     def forward(self, a, x, z, h=None, dream=False, inference=False):
-        if inference: #only use embedding network, i.e. no image predictor
+        if inference: # only use embedding network, i.e. no image predictor
             return self.forward_inference(a, x, z, h)
         elif dream:
             return self.dream(a, x, z, h)
